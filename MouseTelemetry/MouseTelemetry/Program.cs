@@ -6,62 +6,99 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows.Forms;
 using System.Drawing;
+using System.Windows.Forms;
+using System.IO;
+using SQLite;
+using MouseTelemetry.Model;
+using MouseTelemetry.Common;
 
 namespace dummy_project2
 {
     class Program
     {
         private static MouseHook _mh;
+        private static SQLiteAsyncConnection db_async;
+        private static List<MouseEvent> saveBatch = new List<MouseEvent>();
+        private static List<MouseEvent> midSaveBatch = new List<MouseEvent>();
+        private static Task saveBatchTask = null;
+
         static void Main(string[] args)
         {
+            Task.Run(async () =>
+            {
+                db_async = await InitDatabase();
+            }).Wait();
+
             _mh = new MouseHook();
             _mh.SetHook();
-            _mh.MouseMoveEvent += mh_MouseMoveEvent;
             _mh.MouseClickEvent += mh_MouseClickEvent;
-            _mh.MouseDownEvent += mh_MouseDownEvent;
-            _mh.MouseUpEvent += mh_MouseUpEvent;
 
             System.Windows.Forms.Application.Run();
         }
-        private static void mh_MouseDownEvent(object sender, MouseEventArgs e)
+        #region Database stuff
+        private static async Task<SQLiteAsyncConnection> InitDatabase()
         {
-            if (e.Button == MouseButtons.Left)
-            {
-                Console.WriteLine("Left Button Press" + " at " + DateTime.Now.Ticks);
-            }
-            if (e.Button == MouseButtons.Right)
-            {
-                Console.WriteLine("Right Button Press" + " at " + DateTime.Now.Ticks);
-            }
-        }
-        private static void mh_MouseUpEvent(object sender, MouseEventArgs e)
-        {
+            #region Init
+            DirectoryInfo workDir = new DirectoryInfo(Environment.CurrentDirectory);
+            string basePath = workDir.Parent.Parent.Parent.FullName;
+            string dbPath = Path.Combine(basePath, "mouse_events_" + TimeExtensions.GetCurrentTimeStamp() + ".db");
+            SQLiteAsyncConnection con = new SQLiteAsyncConnection(dbPath);
 
-            if (e.Button == MouseButtons.Left)
+            await con.CreateTableAsync<MouseEvent>();
+            return con;
+            #endregion
+        }
+        private static async Task SaveBatch()
+        {
+            await db_async.InsertAllAsync(saveBatch);
+            saveBatch.Clear();
+            return;
+        }
+        private static bool BatchSaved()
+        {
+            if (saveBatchTask != null)
             {
-                Console.WriteLine("Left Button Release" + " at " + DateTime.Now.Ticks);
+                //Console.WriteLine("Checking if batch is saved: " + saveBatchTask.IsCompleted);
+                return saveBatchTask.IsCompleted;
             }
-            if (e.Button == MouseButtons.Right)
+            //Console.WriteLine("Checking if batch is saved: " + true);
+            return true;
+        }
+        #endregion
+
+        #region Mouse stuff
+        private static void mh_MouseClickEvent(object sender, MouseEvent me)
+        {
+            if (me == null)
             {
-                Console.WriteLine("Right Button Release" + " at " + DateTime.Now.Ticks);
+                return;
             }
 
-        }
-        private static void mh_MouseClickEvent(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
+            if (BatchSaved())
             {
-                string sText = "(" + e.X.ToString() + "," + e.Y.ToString() + ")";
-                Console.WriteLine(sText);
+                if (midSaveBatch.Count > 0)
+                {
+                    //Console.WriteLine("Copying mid batch to batch");
+                    Console.WriteLine(string.Format("Copying {0} events to batch", midSaveBatch.Count));
+                    saveBatch = new List<MouseEvent>(midSaveBatch);
+                    midSaveBatch.Clear();
+                }
+
+                //Console.WriteLine("Saving to batch");
+                saveBatch.Add(me);
+                if (saveBatch.Count >= 1000)
+                {
+                    Console.WriteLine(string.Format("Writing {0} events to DB", saveBatch.Count));
+                    saveBatchTask = SaveBatch();
+                }
+            }
+            else
+            {
+                //Console.WriteLine("Saving to mid batch");
+                midSaveBatch.Add(me);
             }
         }
-        private static void mh_MouseMoveEvent(object sender, MouseEventArgs e)
-        {
-            int x = e.Location.X;
-            int y = e.Location.Y;
-            Console.WriteLine("Mouse move X:" + x + " Y:" + y + " at " + DateTime.Now.Ticks);
-        }
+        #endregion
     }
 }

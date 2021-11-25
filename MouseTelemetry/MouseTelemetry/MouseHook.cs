@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using MouseTelemetry.Model;
 
 namespace dummy_project2
 {
@@ -16,10 +17,10 @@ namespace dummy_project2
                 if (point != value)
                 {
                     point = value;
-                    if (MouseMoveEvent != null)
+                    if (MouseClickEvent != null)
                     {
-                        var e = new MouseEventArgs(MouseButtons.None, 0, point.X, point.Y, 0);
-                        MouseMoveEvent(this, e);
+                        var e = new MouseEvent("none", "move", point.X, point.Y, 0);
+                        MouseClickEvent(this, e);
                     }
                 }
             }
@@ -35,6 +36,7 @@ namespace dummy_project2
         private const int WM_LBUTTONDBLCLK = 0x203;
         private const int WM_RBUTTONDBLCLK = 0x206;
         private const int WM_MBUTTONDBLCLK = 0x209;
+        private const int WM_MBUTTONROLL = 0x20A;
         public const int WH_MOUSE_LL = 14;
         public Win32API.HookProc hProc;
         public MouseHook()
@@ -64,41 +66,45 @@ namespace dummy_project2
                 {
                     MouseButtons button = MouseButtons.None;
                     int clickCount = 0;
+                    MouseEvent e = null;
                     switch ((Int32)wParam)
                     {
                         case WM_LBUTTONDOWN:
                             button = MouseButtons.Left;
                             clickCount = 1;
-                            MouseDownEvent(this, new MouseEventArgs(button, clickCount, point.X, point.Y, 0));
+                            e = new MouseEvent("left", "down", point.X, point.Y, 0);
                             break;
                         case WM_RBUTTONDOWN:
                             button = MouseButtons.Right;
                             clickCount = 1;
-                            MouseDownEvent(this, new MouseEventArgs(button, clickCount, point.X, point.Y, 0));
+                            e = new MouseEvent("right", "down", point.X, point.Y, 0);
                             break;
                         case WM_MBUTTONDOWN:
                             button = MouseButtons.Middle;
                             clickCount = 1;
-                            MouseDownEvent(this, new MouseEventArgs(button, clickCount, point.X, point.Y, 0));
+                            e = new MouseEvent("middle", "down", point.X, point.Y, 0);
                             break;
                         case WM_LBUTTONUP:
                             button = MouseButtons.Left;
                             clickCount = 1;
-                            MouseUpEvent(this, new MouseEventArgs(button, clickCount, point.X, point.Y, 0));
+                            e = new MouseEvent("left", "up", point.X, point.Y, 0);
                             break;
                         case WM_RBUTTONUP:
                             button = MouseButtons.Right;
                             clickCount = 1;
-                            MouseUpEvent(this, new MouseEventArgs(button, clickCount, point.X, point.Y, 0));
+                            e = new MouseEvent("right", "up", point.X, point.Y, 0);
                             break;
                         case WM_MBUTTONUP:
                             button = MouseButtons.Middle;
                             clickCount = 1;
-                            MouseUpEvent(this, new MouseEventArgs(button, clickCount, point.X, point.Y, 0));
+                            e = new MouseEvent("middle", "up", point.X, point.Y, 0);
+                            break;
+                        case WM_MBUTTONROLL:
+                            button = MouseButtons.Middle;
+                            clickCount = 1;
+                            e = new MouseEvent("middle", "scroll", point.X, point.Y, 120);
                             break;
                     }
-
-                    var e = new MouseEventArgs(button, clickCount, point.X, point.Y, 0);
                     MouseClickEvent(this, e);
                 }
                 this.Point = new Point(MyMouseHookStruct.pt.x, MyMouseHookStruct.pt.y);
@@ -106,16 +112,7 @@ namespace dummy_project2
             }
         }
 
-        public delegate void MouseMoveHandler(object sender, MouseEventArgs e);
-        public event MouseMoveHandler MouseMoveEvent;
-
-        public delegate void MouseClickHandler(object sender, MouseEventArgs e);
+        public delegate void MouseClickHandler(object sender, MouseEvent e);
         public event MouseClickHandler MouseClickEvent;
-
-        public delegate void MouseDownHandler(object sender, MouseEventArgs e);
-        public event MouseDownHandler MouseDownEvent;
-
-        public delegate void MouseUpHandler(object sender, MouseEventArgs e);
-        public event MouseUpHandler MouseUpEvent;
     }
 }
