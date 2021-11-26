@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Drawing;
-using System.Windows.Forms;
 using System.Runtime.InteropServices;
 
-namespace dummy_project2
+namespace MouseTelemetry
 {
     public class Win32API
     {
