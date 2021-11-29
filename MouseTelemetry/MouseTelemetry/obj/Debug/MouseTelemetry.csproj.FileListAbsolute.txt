@@ -59,3 +59,9 @@ D:\Dev\pc_telemetry\MouseTelemetry\MouseTelemetry\obj\Debug\MouseTelemetry.cspro
 D:\Dev\pc_telemetry\MouseTelemetry\MouseTelemetry\obj\Debug\MouseTelemetry.csproj.CopyComplete
 D:\Dev\pc_telemetry\MouseTelemetry\MouseTelemetry\obj\Debug\MouseTelemetry.exe
 D:\Dev\pc_telemetry\MouseTelemetry\MouseTelemetry\obj\Debug\MouseTelemetry.pdb
+F:\Dev\pc_telemetry\MouseTelemetry\MouseTelemetry\bin\Debug\Common.dll
+F:\Dev\pc_telemetry\MouseTelemetry\MouseTelemetry\bin\Debug\Common.pdb
+F:\Dev\pc_telemetry\MouseTelemetry\MouseTelemetry\bin\Debug\FluentCommandLineParser.dll
+F:\Dev\pc_telemetry\MouseTelemetry\MouseTelemetry\bin\Debug\FluentCommandLineParser.pdb
+F:\Dev\pc_telemetry\MouseTelemetry\MouseTelemetry\bin\Debug\FluentCommandLineParser.xml
+F:\Dev\pc_telemetry\MouseTelemetry\MouseTelemetry\obj\Debug\MouseTelemetry.csproj.CopyComplete

@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using MouseTelemetry.Model;
+using static Common.Helpers.Constants;
 
 namespace MouseTelemetry
 {
@@ -48,31 +49,31 @@ namespace MouseTelemetry
                     switch ((Int32)wParam)
                     {
                         case WM_MOUSEMOVE:
-                            e = new MouseEvent("none", "move", x, y, 0);
+                            e = new MouseEvent(MouseButton.None, MouseAction.Move, x, y, 0);
                             break;
                         case WM_LBUTTONDOWN:
-                            e = new MouseEvent("left", "down", x, y, 0);
+                            e = new MouseEvent(MouseButton.Left, MouseAction.Down, x, y, 0);
                             break;
                         case WM_RBUTTONDOWN:
-                            e = new MouseEvent("right", "down", x, y, 0);
+                            e = new MouseEvent(MouseButton.Right, MouseAction.Down, x, y, 0);
                             break;
                         case WM_MBUTTONDOWN:
-                            e = new MouseEvent("middle", "down", x, y, 0);
+                            e = new MouseEvent(MouseButton.Middle, MouseAction.Down, x, y, 0);
                             break;
                         case WM_LBUTTONUP:
-                            e = new MouseEvent("left", "up", x, y, 0);
+                            e = new MouseEvent(MouseButton.Left, MouseAction.Up, x, y, 0);
                             break;
                         case WM_RBUTTONUP:
-                            e = new MouseEvent("right", "up", x, y, 0);
+                            e = new MouseEvent(MouseButton.Right, MouseAction.Up, x, y, 0);
                             break;
                         case WM_MBUTTONUP:
-                            e = new MouseEvent("middle", "up", x, y, 0);
+                            e = new MouseEvent(MouseButton.Middle, MouseAction.Up, x, y, 0);
                             break;
                         case WM_MBUTTONROLL:
-                            e = new MouseEvent("middle", "scroll", x, y, 120);
+                            e = new MouseEvent(MouseButton.Middle, MouseAction.Scroll, x, y, 120);
                             break;
                         default:
-                            e = new MouseEvent("unknown", "unknown", x, y, 0);
+                            e = new MouseEvent(MouseButton.Other, MouseAction.Other, x, y, 0);
                             break;
                     }
                     MouseEvent(this, e);

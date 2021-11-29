@@ -1,4 +1,4 @@
-﻿using MouseTelemetry.Common;
+﻿using MouseTelemetry.Helpers;
 using MouseTelemetry.Model;
 using SQLite;
 using System;
@@ -11,9 +11,9 @@ namespace MouseTelemetry
     public class DataCollector
     {
         int totalEventsSaved = 0;
-        public DataCollector()
+        public DataCollector(string dbPath)
         {
-            Task.Run(async () => { db_async = await InitDatabase(); }).Wait();
+            Task.Run(async () => { db_async = await InitDatabase(dbPath); }).Wait();
         }
 
         #region Public Methods
@@ -41,11 +41,8 @@ namespace MouseTelemetry
         #endregion
 
         #region Private Methods
-        private async Task<SQLiteAsyncConnection> InitDatabase()
+        private async Task<SQLiteAsyncConnection> InitDatabase(string dbPath)
         {
-            DirectoryInfo workDir = new DirectoryInfo(Environment.CurrentDirectory);
-            string basePath = workDir.Parent.Parent.Parent.FullName;
-            string dbPath = Path.Combine(basePath, "mouse_events_" + TimeExtensions.GetCurrentTimeStamp() + ".db");
             SQLiteAsyncConnection con = new SQLiteAsyncConnection(dbPath);
 
             await con.CreateTableAsync<MouseEvent>();
