@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using static Common.Helpers.Constants;
 
 namespace Heatmap
@@ -17,7 +18,7 @@ namespace Heatmap
     class Program
     {
         private static SQLiteAsyncConnection db_async;
-        private static string _dbPath = @"F:\Dev\pc_telemetry\MouseTelemetry\mouse_events_28112021Utc.db";
+        private static string _dbPath = @"D:\Dev\pc_telemetry\MouseTelemetry\mouse_events_29112021Utc.db";
         private static string _sqlQuery = string.Format("SELECT * FROM \"{0}\"", nameof(MouseEvent));
         private static IEnumerable<MouseAction> _actions;
         private static IEnumerable<MouseButton> _buttons;
@@ -65,8 +66,6 @@ namespace Heatmap
             p.SetupHelp("?", "help")
              .Callback(text => { _parsingOk = false; Console.WriteLine(text); });
 
-            p.Parse(args);
-
             var parseResult = p.Parse(args);
             if (parseResult.HasErrors)
             {
@@ -106,9 +105,10 @@ namespace Heatmap
                 {
                     Dictionary<MouseAction, IEnumerable<IMouseEvent>> actionEvents = new Dictionary<MouseAction, IEnumerable<IMouseEvent>>();
 
-                    List<SecondaryMouseEvent> singleClicks = ClickAnalyzer.FindConsecutiveActions(originalTestData.Cast<IMouseEvent>(), button, MouseAction.Down, MouseAction.Up, MouseAction.Click, TimeSpan.FromMilliseconds(500));
-                    List<SecondaryMouseEvent> doubleClicks = ClickAnalyzer.FindConsecutiveActions(singleClicks.Cast<IMouseEvent>(), button, MouseAction.Click, MouseAction.Click, MouseAction.DoubleClick, TimeSpan.FromMilliseconds(500));
-                    List<SecondaryMouseEvent> drags = ClickAnalyzer.FindActionsWithMovementInBetween(originalTestData.Cast<IMouseEvent>(), button, MouseAction.Down, MouseAction.Up, MouseAction.Drag, 5);
+                    List<SecondaryMouseEvent> singleClicks = ClickAnalyzer.FindConsecutiveActions(originalTestData.Cast<IMouseEvent>(), button, MouseAction.Down, MouseAction.Up, MouseAction.Click, TimeSpan.FromMilliseconds(500), new Size(5, 5));
+                    List<SecondaryMouseEvent> doubleClicks = ClickAnalyzer.FindConsecutiveActions(singleClicks.Cast<IMouseEvent>(), button, MouseAction.Click, MouseAction.Click, MouseAction.DoubleClick, TimeSpan.FromMilliseconds(500), SystemInformation.DoubleClickSize);
+                    List<SecondaryMouseEvent> drags = ClickAnalyzer.FindActionsWithMovementInBetween(originalTestData.Cast<IMouseEvent>(), button, MouseAction.Down, MouseAction.Up, MouseAction.Drag, SystemInformation.DragSize);
+                    double distance = ClickAnalyzer.FindTotalMovementDistance(originalTestData, button);
 
                     actionEvents[MouseAction.Click] = singleClicks.Cast<IMouseEvent>();
                     actionEvents[MouseAction.DoubleClick] = doubleClicks.Cast<IMouseEvent>();
@@ -123,7 +123,7 @@ namespace Heatmap
                 }
 
 
-                //testData.AddRange(originalTestData.Where(p => buttons.Contains(p.Button) && actions.Contains(p.Action)));
+                testData.AddRange(originalTestData.Where(p => buttons.Contains(p.Button) && actions.Contains(p.Action)));
 
                 if (testData.Count == 0)
                 {
@@ -137,12 +137,12 @@ namespace Heatmap
                 string dbPath = Path.Combine(basePath, "heatmap_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png");
 
                 //Set up the factory and run the GetHeatMap function.
-                HeatmapFactory map = new HeatmapFactory(originalTestData.Cast<IMousePoint>().ToList());
+                HeatmapFactory map = new HeatmapFactory(originalTestData);
                 map.OpenOnComplete = true;
                 map.SaveLocation = dbPath;
                 //map.ColorFunction = HeatmapFactory.GrayScale;
                 map.ColorFunction = HeatmapFactory.BasicColorMapping;
-                map.GetHeatMap(testData.Cast<IMousePoint>());
+                map.GetHeatMap(testData.Cast<MouseEvent>());
                 Console.WriteLine("Exit? y/n");
                 if (Console.ReadKey().ToString() == "y")
                 {

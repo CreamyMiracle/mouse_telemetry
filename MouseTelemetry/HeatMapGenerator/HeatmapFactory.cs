@@ -13,7 +13,7 @@ namespace Heatmap
 {
     class HeatmapFactory
     {
-        public HeatmapFactory(IEnumerable<IMousePoint> points)
+        public HeatmapFactory(IEnumerable<MouseEvent> points)
         {
             Point maxPoint = NormalizeData(points);
             InputMax = maxPoint;
@@ -39,7 +39,7 @@ namespace Heatmap
 
         public HeatMask HeatMask { get; set; }
 
-        private int NormalizeX(IEnumerable<IMousePoint> points)
+        private int NormalizeX(IEnumerable<MouseEvent> points)
         {
             double valueMax = points.Max(p => p.X);
             double valueMin = points.Min(p => p.X);
@@ -63,7 +63,7 @@ namespace Heatmap
             return Convert.ToInt32(scaleMax);
         }
 
-        private int NormalizeY(IEnumerable<IMousePoint> points)
+        private int NormalizeY(IEnumerable<MouseEvent> points)
         {
             double valueMax = points.Max(p => p.Y);
             double valueMin = points.Min(p => p.Y);
@@ -87,7 +87,7 @@ namespace Heatmap
             return Convert.ToInt32(scaleMax);
         }
 
-        public Point NormalizeData(IEnumerable<IMousePoint> points)
+        public Point NormalizeData(IEnumerable<MouseEvent> points)
         {
             int maxInputX = points.Max(p => p.X);
             int maxInputY = points.Max(p => p.Y);
@@ -100,7 +100,7 @@ namespace Heatmap
             return new Point(maxX, maxY);
         }
 
-        public void GetHeatMap(IEnumerable<IMousePoint> points)
+        public void GetHeatMap(IEnumerable<MouseEvent> points)
         {
             if (SaveLocation == null)
             {
@@ -187,12 +187,12 @@ namespace Heatmap
 
         //This function checks the value of every point in the input list.  If the point is larger than our max value, we scale it back down.
         //The max value in the list will be mapped to the max value of the input range.
-        private void CheckInput(IEnumerable<IMousePoint> points)
+        private void CheckInput(IEnumerable<MouseEvent> points)
         {
             // yes
         }
 
-        private void AssignHeat(int[][] bin, IEnumerable<IMousePoint> points)
+        private void AssignHeat(int[][] bin, IEnumerable<MouseEvent> points)
         {
             //TODO: Because we store the information as ints, we are bound by the size of an int.
             //This shouldn;t be a problem as we can have something of the order of 20 million at +100.

@@ -12,10 +12,24 @@ namespace MouseTelemetry
     {
         private static MouseHook _mh;
         private static DataCollector _collector;
-        private static string _dbDir;
-        private static string _dbName;
+        private static string _dbDir = Constants.DefaultDatabasePath;
+        private static string _dbName = Constants.DefaultDatabaseName;
+        private static bool _parsingOk = true;
 
         static void Main(string[] args)
+        {
+#if DEBUG
+            Run(args);
+#else
+            if (Parse(args))
+            {
+                Run(args);
+            }
+#endif
+            Application.Run();
+        }
+
+        private static bool Parse(string[] args)
         {
             var p = new FluentCommandLineParser();
 
@@ -29,11 +43,16 @@ namespace MouseTelemetry
              .SetDefault(Constants.DefaultDatabaseName)
              .WithDescription("Name for database file");
 
-            p.Parse(args);
+            p.SetupHelp("?", "help")
+             .Callback(text => { _parsingOk = false; Console.WriteLine(text); });
 
-            Run(args);
-
-            Application.Run();
+            var parseResult = p.Parse(args);
+            if (parseResult.HasErrors)
+            {
+                p.HelpOption.ShowHelp(p.Options);
+                _parsingOk = false;
+            }
+            return _parsingOk;
         }
 
         public static void Run(string[] args)
