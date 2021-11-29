@@ -13,17 +13,11 @@ namespace Heatmap
 {
     class HeatmapFactory
     {
-        public HeatmapFactory(IEnumerable<MouseEvent> points)
+        public HeatmapFactory(IEnumerable<MouseEvent> points, Point maxPoint)
         {
-            Point maxPoint = NormalizeData(points);
             InputMax = maxPoint;
             OutputResolution = maxPoint;
         }
-
-        public bool OpenOnComplete = false;
-
-        //The output heatmap is saved to a png file.  The save location states where to save it. 
-        public String SaveLocation;
 
         //Represents the maximum values of inputs to the heat function.  If there are larger values, they will be scaled down.
         public Point InputMax { get; set; }
@@ -39,103 +33,31 @@ namespace Heatmap
 
         public HeatMask HeatMask { get; set; }
 
-        private int NormalizeX(IEnumerable<MouseEvent> points)
+        public Bitmap GetHeatMap(IEnumerable<MouseEvent> points)
         {
-            double valueMax = points.Max(p => p.X);
-            double valueMin = points.Min(p => p.X);
-            double valueMinAbs = Math.Abs(valueMin);
-
-            double transformedValueMax = valueMax + valueMinAbs;
-            double transformedValueMin = valueMin + valueMinAbs; // should be 0
-
-            double scaleMin = 0; //the normalized minimum desired
-            double scaleMax = transformedValueMax; //the normalized maximum desired
-
-            double valueRange = valueMax - valueMin;
-            double scaleRange = scaleMax - scaleMin;
-
-            foreach (MouseEvent point in points)
-            {
-                point.X += Convert.ToInt32(valueMinAbs);
-                //point.X = Convert.ToInt32(((scaleRange * (point.X - valueMin)) / valueRange) + scaleMin);
-            }
-
-            return Convert.ToInt32(scaleMax);
-        }
-
-        private int NormalizeY(IEnumerable<MouseEvent> points)
-        {
-            double valueMax = points.Max(p => p.Y);
-            double valueMin = points.Min(p => p.Y);
-            double valueMinAbs = Math.Abs(valueMin);
-
-            double transformedValueMax = valueMax + valueMinAbs;
-            double transformedValueMin = valueMin + valueMinAbs; // should be 0
-
-            double scaleMin = 0; //the normalized minimum desired
-            double scaleMax = transformedValueMax; //the normalized maximum desired
-
-            double valueRange = valueMax - valueMin;
-            double scaleRange = scaleMax - scaleMin;
-
-            foreach (MouseEvent point in points)
-            {
-                point.Y += Convert.ToInt32(valueMinAbs);
-                //point.Y = Convert.ToInt32(((scaleRange * (point.Y - valueMin)) / valueRange) + scaleMin);
-            }
-
-            return Convert.ToInt32(scaleMax);
-        }
-
-        public Point NormalizeData(IEnumerable<MouseEvent> points)
-        {
-            int maxInputX = points.Max(p => p.X);
-            int maxInputY = points.Max(p => p.Y);
-            int minInputX = points.Min(p => p.X);
-            int minInputY = points.Min(p => p.Y);
-
-            int maxX = NormalizeX(points);
-            int maxY = NormalizeY(points);
-
-            return new Point(maxX, maxY);
-        }
-
-        public void GetHeatMap(IEnumerable<MouseEvent> points)
-        {
-            if (SaveLocation == null)
-            {
-                Console.WriteLine("You must specifiy a save location for the Heatmap output.  fn:GetHeatMap aborted.");
-                return;
-            }
-
             if (InputMax == null)
             {
                 InputMax = new Point(1920, 1080);
-                Console.WriteLine("No max input value specified. Defaulting to 1920:1080.");
             }
 
             //TODO Scale down the input to output resolution if it is larger.
             if (OutputResolution == null)
             {
                 OutputResolution = new Point(1920, 1080);
-                Console.WriteLine("No resolutin specified.  Defaulting to 1920:1080.");
             }
 
             if (HeatFunction == null)
             {
-                Console.WriteLine("No HeatFunction mapper specified.  Defaulting to Identity.");
                 HeatFunction = (f => f);
             }
 
             if (ColorFunction == null)
             {
-                Console.WriteLine("No ColorFunction mapper specified.  Defaulting to Gray Scale.");
                 ColorFunction = HeatmapFactory.GrayScale;
             }
 
             if (HeatMask == null)
             {
-                Console.WriteLine("No HeatMask specified.  Defaulting to linear falloff with xRadius = 20 and yRadius = 20.");
                 HeatMask = HeatmapFactory.LinearFalloff(40, 40);
             }
 
@@ -164,25 +86,7 @@ namespace Heatmap
 
             Bitmap output = GetBitmap(normalized);
 
-            //TODO This is filty.  Don't be filty.
-
-            using (FileStream f = File.Open(SaveLocation, FileMode.Create))
-            {
-                output.Save(f, ImageFormat.Png);
-            }
-
-            Console.WriteLine("Bitmap created and saved to " + SaveLocation);
-
-            if (OpenOnComplete)
-            {
-                Process myProc = new Process();
-                myProc.StartInfo.FileName = SaveLocation;
-                myProc.Start();
-            }
-
-
-
-
+            return output;
         }
 
         //This function checks the value of every point in the input list.  If the point is larger than our max value, we scale it back down.

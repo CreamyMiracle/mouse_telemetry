@@ -71,7 +71,7 @@ namespace MouseTelemetry
         private List<MouseEvent> saveBatch = new List<MouseEvent>();
         private List<MouseEvent> midSaveBatch = new List<MouseEvent>();
         private Task saveBatchTask = null;
-        private int batchSize = 1000;
+        private int batchSize = 10;
         #endregion
     }
 }
