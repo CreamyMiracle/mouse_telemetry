@@ -5,7 +5,7 @@ using System.Windows.Forms;
 using MouseTelemetry.Model;
 using static Common.Helpers.Constants;
 
-namespace MouseTelemetry
+namespace MouseTelemetry.Hooks
 {
     public class MouseHook
     {
@@ -22,10 +22,10 @@ namespace MouseTelemetry
         private const int WM_MBUTTONDBLCLK = 0x209;
         private const int WM_MBUTTONROLL = 0x20A;
         public const int WH_MOUSE_LL = 14;
-        public Win32API.HookProc hProc;
+        public Win32API.MouseHookProc hProc;
         public int SetHook()
         {
-            hProc = new Win32API.HookProc(MouseHookProc);
+            hProc = new Win32API.MouseHookProc(MouseHookProc);
             hHook = Win32API.SetWindowsHookEx(WH_MOUSE_LL, hProc, IntPtr.Zero, 0);
             return hHook;
         }

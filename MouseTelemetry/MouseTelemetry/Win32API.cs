@@ -6,9 +6,6 @@ namespace MouseTelemetry
 {
     public class Win32API
     {
-        private const uint WINEVENT_OUTOFCONTEXT = 0;
-        private const uint EVENT_SYSTEM_FOREGROUND = 3;
-
         [StructLayout(LayoutKind.Sequential)]
         public class POINT
         {
@@ -23,10 +20,13 @@ namespace MouseTelemetry
             public int wHitTestCode;
             public int dwExtraInfo;
         }
-        public delegate int HookProc(int nCode, IntPtr wParam, IntPtr lParam);
+        public delegate int MouseHookProc(int nCode, IntPtr wParam, IntPtr lParam);
+        public delegate void WindowHookProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
+
+
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern int SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hInstance, int threadId);
+        public static extern int SetWindowsHookEx(int idHook, MouseHookProc lpfn, IntPtr hInstance, int threadId);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
         public static extern bool UnhookWindowsHookEx(int idHook);
@@ -36,18 +36,17 @@ namespace MouseTelemetry
 
 
 
-        public delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
 
         [DllImport("user32.dll")]
-        static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr hmodWinEventProc, WinEventDelegate lpfnWinEventProc, uint idProcess, uint idThread, uint dwFlags);
+        public static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr hmodWinEventProc, WindowHookProc lpfnWinEventProc, uint idProcess, uint idThread, uint dwFlags);
 
         [DllImport("user32.dll")]
-        static extern IntPtr GetForegroundWindow();
+        public static extern IntPtr GetForegroundWindow();
 
         [DllImport("user32.dll")]
-        static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+        public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
 
-        public string GetActiveWindowTitle()
+        public static string GetActiveWindowTitle()
         {
             const int nChars = 256;
             IntPtr handle = IntPtr.Zero;

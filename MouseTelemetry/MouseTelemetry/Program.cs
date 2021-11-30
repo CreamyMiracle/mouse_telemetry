@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Common.Helpers;
 using Fclp;
+using MouseTelemetry.Hooks;
 using MouseTelemetry.Model;
 
 namespace MouseTelemetry
@@ -11,6 +11,7 @@ namespace MouseTelemetry
     class Program
     {
         private static MouseHook _mh;
+        private static WindowHook _wh;
         private static DataCollector _collector;
         private static string _dbDir = Constants.DefaultDatabasePath;
         private static string _dbName = Constants.DefaultDatabaseName;
@@ -61,11 +62,15 @@ namespace MouseTelemetry
             Console.WriteLine("Saving mouse events to '{0}'", dbPath);
             Console.SetWindowSize(50, 10);
 
-            _mh = new MouseHook();
-            _mh.SetHook();
-            _mh.MouseEvent += mh_MouseEvent;
+            //_mh = new MouseHook();
+            //_mh.SetHook();
+            //_mh.MouseEvent += mh_MouseEvent;
 
-            _collector = new DataCollector(dbPath);
+            _wh = new WindowHook();
+            _wh.SetHook();
+            _wh.WindowChanged += wh_WindowEvent;
+
+            //_collector = new DataCollector(dbPath);
         }
 
         #region Mouse stuff
@@ -79,6 +84,10 @@ namespace MouseTelemetry
             {
                 Console.WriteLine(ex);
             }
+        }
+        private static void wh_WindowEvent(object sender, string name)
+        {
+            Console.WriteLine(name);
         }
         #endregion
     }
