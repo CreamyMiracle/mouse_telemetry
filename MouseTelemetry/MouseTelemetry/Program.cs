@@ -62,15 +62,17 @@ namespace MouseTelemetry
             Console.WriteLine("Saving mouse events to '{0}'", dbPath);
             Console.SetWindowSize(50, 10);
 
-            //_mh = new MouseHook();
-            //_mh.SetHook();
-            //_mh.MouseEvent += mh_MouseEvent;
+            _collector = new DataCollector(dbPath);
+
+            _mh = new MouseHook();
+            _mh.SetHook();
+            _mh.MouseEvent += mh_MouseEvent;
 
             _wh = new WindowHook();
             _wh.SetHook();
             _wh.WindowChanged += wh_WindowEvent;
 
-            //_collector = new DataCollector(dbPath);
+            _collector.ActiveWindowChanged(_wh.GetActiveWindowTitle());
         }
 
         #region Mouse stuff
@@ -87,7 +89,14 @@ namespace MouseTelemetry
         }
         private static void wh_WindowEvent(object sender, string name)
         {
-            Console.WriteLine(name);
+            try
+            {
+                _collector.ActiveWindowChanged(name);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
         #endregion
     }

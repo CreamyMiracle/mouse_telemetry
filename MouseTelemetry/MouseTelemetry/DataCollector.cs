@@ -11,14 +11,20 @@ namespace MouseTelemetry
     public class DataCollector
     {
         int totalEventsSaved = 0;
+        string currentWindow = "";
         public DataCollector(string dbPath)
         {
             Task.Run(async () => { db_async = await InitDatabase(dbPath); }).Wait();
         }
 
         #region Public Methods
+        public void ActiveWindowChanged(string windowName)
+        {
+            currentWindow = windowName;
+        }
         public void CollectMouseEvent(MouseEvent me)
         {
+            me.Window = currentWindow;
             if (BatchSaved())
             {
                 if (midSaveBatch.Count > 0)

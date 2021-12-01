@@ -3,7 +3,6 @@ using Fclp;
 using MouseTelemetry.Helpers;
 using MouseTelemetry.Model;
 using SQLite;
-using SQLiteNetExtensionsAsync.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -19,19 +18,22 @@ namespace Heatmap
     class Program
     {
         private static SQLiteAsyncConnection db_async;
-        private static string _dbPath = @"F:\Dev\pc_telemetry\MouseTelemetry\mouse_events_29112021Utc.db";
+        private static string _dbPath = @"F:\Dev\pc_telemetry\MouseTelemetry\mouse_events_30112021Utc.db";
         private static string _sqlQuery = string.Format("SELECT * FROM \"{0}\"", nameof(MouseEvent));
         private static IEnumerable<MouseAction> _actions;
         private static IEnumerable<MouseButton> _buttons;
+        private static IEnumerable<string> _windows;
         private static List<MouseAction> _defaultActions = Enum.GetValues(typeof(MouseAction)).Cast<MouseAction>().ToList();
         private static List<MouseButton> _defaultButtons = Enum.GetValues(typeof(MouseButton)).Cast<MouseButton>().ToList();
+        private static List<string> _defaultWindows = new List<string>() { };
         private static bool _parsingOk = true;
 
         static void Main(string[] args)
         {
 #if DEBUG
-            _actions = new List<MouseAction>() { MouseAction.Click };//Enum.GetValues(typeof(MouseAction)).Cast<MouseAction>().ToList();
-            _buttons = Enum.GetValues(typeof(MouseButton)).Cast<MouseButton>().ToList();
+            _windows = _defaultWindows;
+            _actions = _defaultActions;
+            _buttons = _defaultButtons;
             Run(args);
 #else
             if (Parse(args))
@@ -64,6 +66,10 @@ namespace Heatmap
              .SetDefault(_defaultActions)
              .WithDescription("Actions of given buttons that are taken into consideration. Values: " + "{" + string.Join("|", _defaultActions) + "}");
 
+            p.Setup<List<string>>('w', "windows").Callback(value => _windows = value)
+            .SetDefault(_defaultWindows)
+            .WithDescription("Full or partial titles of windows that are taken into consideration. Values: " + "{" + string.Join("|", _defaultWindows) + "}");
+
             p.SetupHelp("?", "help")
              .Callback(text => { _parsingOk = false; Console.WriteLine(text); });
 
@@ -83,7 +89,7 @@ namespace Heatmap
 
             Task.Run(async () =>
             {
-                await GenerateHeatMap(_actions, _buttons);
+                await GenerateHeatMap(_actions, _buttons, _windows);
             }).Wait();
         }
 
@@ -98,86 +104,28 @@ namespace Heatmap
         //    List<MouseEvent> originalTestData = await ReadMouseEvents();
         //}
 
-        private static async Task GenerateHeatMap(IEnumerable<MouseAction> actions, IEnumerable<MouseButton> buttons)
+        private static async Task GenerateHeatMap(IEnumerable<MouseAction> actions, IEnumerable<MouseButton> buttons, IEnumerable<string> windows)
         {
             List<MouseEvent> originalTestData = await ReadMouseEvents();
+
             Point maxPoint = PointHelpers.NormalizeData(originalTestData);
 
-            while (true)
-            {
-                List<IMouseEvent> selectedData = new List<IMouseEvent>();
+            Dictionary<MouseButton, Dictionary<MouseAction, IEnumerable<IMouseEvent>>> btnActs = EventExtractor.ExtractButtonActions(originalTestData);
+            List<IMouseEvent> selectedData = EventExtractor.SelectCertain(btnActs, actions, buttons, _windows);
+            EventExtractor.PrintButtonActions(btnActs, _windows);
 
-                Dictionary<MouseButton, Dictionary<MouseAction, IEnumerable<IMouseEvent>>> buttonActions = new Dictionary<MouseButton, Dictionary<MouseAction, IEnumerable<IMouseEvent>>>();
-                foreach (MouseButton btn in Enum.GetValues(typeof(MouseButton)).Cast<MouseButton>())
-                {
-                    Dictionary<MouseAction, IEnumerable<IMouseEvent>> actionEvents = new Dictionary<MouseAction, IEnumerable<IMouseEvent>>();
-                    foreach (MouseAction act in Enum.GetValues(typeof(MouseAction)).Cast<MouseAction>())
-                    {
-                        actionEvents[act] = new List<IMouseEvent>();
-                    }
-                    buttonActions[btn] = actionEvents;
-                }
 
-                foreach (MouseButton button in buttons)
-                {
-                    foreach (MouseAction action in actions)
-                    {
-                        List<MouseEvent> primaryEvents = originalTestData.Where(p => button == p.Button && action == p.Action).ToList();
-                        selectedData.AddRange(primaryEvents);
-                        buttonActions[button][action] = primaryEvents.Cast<IMouseEvent>();
-                    }
-                }
+            DirectoryInfo workDir = new DirectoryInfo(Environment.CurrentDirectory);
+            string basePath = workDir.Parent.Parent.Parent.FullName;
+            string dbPath = Path.Combine(basePath, "heatmap_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png");
 
-                foreach (MouseButton button in buttons)
-                {
-                    List<SecondaryMouseEvent> singleClicks = ClickAnalyzer.FindConsecutiveActions(originalTestData.Cast<IMouseEvent>(), button, MouseAction.Down, MouseAction.Up, MouseAction.Click, TimeSpan.FromMilliseconds(500), new Size(5, 5));
-                    List<SecondaryMouseEvent> doubleClicks = ClickAnalyzer.FindConsecutiveActions(singleClicks.Cast<IMouseEvent>(), button, MouseAction.Click, MouseAction.Click, MouseAction.DoubleClick, TimeSpan.FromMilliseconds(500), SystemInformation.DoubleClickSize);
-                    List<SecondaryMouseEvent> drags = ClickAnalyzer.FindActionsWithMovementInBetween(originalTestData.Cast<IMouseEvent>(), button, MouseAction.Down, MouseAction.Up, MouseAction.Drag, SystemInformation.DragSize);
-                    double distance = ClickAnalyzer.FindTotalMovementDistance(originalTestData.Cast<MouseEvent>(), button);
-
-                    buttonActions[button][MouseAction.Click] = singleClicks;
-                    buttonActions[button][MouseAction.DoubleClick] = doubleClicks;
-                    buttonActions[button][MouseAction.Drag] = drags;
-
-                    selectedData.AddRange(singleClicks.Cast<IMouseEvent>());
-                    selectedData.AddRange(doubleClicks.Cast<IMouseEvent>());
-                    selectedData.AddRange(drags.Cast<IMouseEvent>());
-                }
-
-                Console.WriteLine("Total of " + string.Format("{0} points found", selectedData.Count));
-                foreach (MouseButton button in buttonActions.Keys)
-                {
-                    foreach (MouseAction action in buttonActions[button].Keys)
-                    {
-                        string buttonString = Enum.GetName(typeof(MouseButton), button);
-                        string actionString = Enum.GetName(typeof(MouseAction), action);
-                        int count = buttonActions[button][action].Count();
-                        if (count == 0)
-                        {
-                            continue;
-                        }
-                        Console.WriteLine(string.Format("Button: {0} Action: {1} Count: {2}", buttonString, actionString, buttonActions[button][action].Count()));
-                    }
-                }
-
-                DirectoryInfo workDir = new DirectoryInfo(Environment.CurrentDirectory);
-                string basePath = workDir.Parent.Parent.Parent.FullName;
-                string dbPath = Path.Combine(basePath, "heatmap_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png");
-
-                //Set up the factory and run the GetHeatMap function.
-                HeatmapFactory map = new HeatmapFactory(originalTestData, maxPoint);
-                //map.ColorFunction = HeatmapFactory.GrayScale;
-                map.ColorFunction = HeatmapFactory.BasicColorMapping;
-                Bitmap heatMap = map.GetHeatMap(selectedData.Cast<MouseEvent>());
-                heatMap.DrawLine(selectedData.Cast<MouseEvent>());
-                heatMap.SaveBitmap(@"F:\Dev\pc_telemetry\MouseTelemetry\heatmappi.png");
-
-                Console.WriteLine("Exit? y/n");
-                if (Console.ReadKey().ToString() == "y")
-                {
-                    break;
-                }
-            }
+            //Set up the factory and run the GetHeatMap function.
+            HeatmapFactory map = new HeatmapFactory(originalTestData, maxPoint);
+            //map.ColorFunction = HeatmapFactory.GrayScale;
+            map.ColorFunction = HeatmapFactory.BasicColorMapping;
+            Bitmap heatMap = map.GetHeatMap(selectedData.Cast<MouseEvent>());
+            heatMap.DrawLine(selectedData.Cast<MouseEvent>());
+            heatMap.SaveBitmap(@"F:\Dev\pc_telemetry\MouseTelemetry\heatmappi.png");
         }
     }
 }

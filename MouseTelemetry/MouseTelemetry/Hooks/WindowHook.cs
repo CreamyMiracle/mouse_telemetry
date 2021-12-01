@@ -22,6 +22,10 @@ namespace MouseTelemetry.Hooks
         {
             Win32API.UnhookWindowsHookEx(hHook.ToInt32());
         }
+        public string GetActiveWindowTitle()
+        {
+            return Win32API.GetActiveWindowTitle();
+        }
         private void WinEventProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
         {
             string juu = Win32API.GetActiveWindowTitle();

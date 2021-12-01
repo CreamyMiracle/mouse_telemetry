@@ -52,7 +52,7 @@ namespace MouseTelemetry.Helpers
                     {
                         if (firstActionArea.Contains(secondEvent.X, secondEvent.Y))
                         {
-                            suitableEvents.Add(new SecondaryMouseEvent(firstEvent, secondEvent) { Action = actionName, Timestamp = secondEvent.Timestamp, Delta = secondEvent.Delta });
+                            suitableEvents.Add(new SecondaryMouseEvent(firstEvent, secondEvent) { Action = actionName, Timestamp = secondEvent.Timestamp, Delta = secondEvent.Delta, Window = secondEvent.Window });
                         }
                     }
                 }
@@ -110,7 +110,7 @@ namespace MouseTelemetry.Helpers
                 {
                     if (!firstActionArea.Contains(secondEvent.X, secondEvent.Y))
                     {
-                        suitableEvents.Add(new SecondaryMouseEvent(firstEvent, secondEvent) { Action = actionName, Timestamp = secondEvent.Timestamp, Delta = secondEvent.Delta });
+                        suitableEvents.Add(new SecondaryMouseEvent(firstEvent, secondEvent) { Action = actionName, Timestamp = secondEvent.Timestamp, Delta = secondEvent.Delta, Window = secondEvent.Window });
                     }
                 }
 

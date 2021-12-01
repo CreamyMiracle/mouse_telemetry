@@ -14,6 +14,7 @@ namespace MouseTelemetry.Model
         MouseAction Action { get; set; }
         int Delta { get; set; }
         DateTime Timestamp { get; set; }
+        string Window { get; set; }
     }
 
     public class MouseEvent : IMouseEvent
@@ -22,13 +23,14 @@ namespace MouseTelemetry.Model
         {
 
         }
-        public MouseEvent(MouseButton button, MouseAction action, int x, int y, int delta)
+        public MouseEvent(MouseButton button, MouseAction action, int x, int y, int delta, string window = "")
         {
             Button = button;
             Action = action;
             X = x;
             Y = y;
             Delta = delta;
+            Window = window;
             Timestamp = DateTime.Now;
         }
         public double Distance(MouseEvent destination)
@@ -41,6 +43,7 @@ namespace MouseTelemetry.Model
         public DateTime Timestamp { get; set; }
         public int X { get; set; }
         public int Y { get; set; }
+        public string Window { get; set; }
 
     }
     public class SecondaryMouseEvent : MouseEvent

@@ -3,3 +3,9 @@ D:\Dev\pc_telemetry\MouseTelemetry\Common\bin\Release\Common.dll
 D:\Dev\pc_telemetry\MouseTelemetry\Common\bin\Release\Common.pdb
 D:\Dev\pc_telemetry\MouseTelemetry\Common\obj\Release\Common.dll
 D:\Dev\pc_telemetry\MouseTelemetry\Common\obj\Release\Common.pdb
+F:\Dev\pc_telemetry\MouseTelemetry\Common\bin\Release\Common.dll
+F:\Dev\pc_telemetry\MouseTelemetry\Common\bin\Release\Common.pdb
+F:\Dev\pc_telemetry\MouseTelemetry\Common\obj\Release\Common.csproj.AssemblyReference.cache
+F:\Dev\pc_telemetry\MouseTelemetry\Common\obj\Release\Common.csproj.CoreCompileInputs.cache
+F:\Dev\pc_telemetry\MouseTelemetry\Common\obj\Release\Common.dll
+F:\Dev\pc_telemetry\MouseTelemetry\Common\obj\Release\Common.pdb

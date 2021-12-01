@@ -69,3 +69,4 @@ D:\Dev\pc_telemetry\MouseTelemetry\HeatMapGenerator\obj\Debug\HeatMapGenerator.c
 D:\Dev\pc_telemetry\MouseTelemetry\HeatMapGenerator\obj\Debug\HeatMapGenerator.csproj.CopyComplete
 D:\Dev\pc_telemetry\MouseTelemetry\HeatMapGenerator\obj\Debug\HeatMapGenerator.exe
 D:\Dev\pc_telemetry\MouseTelemetry\HeatMapGenerator\obj\Debug\HeatMapGenerator.pdb
+F:\Dev\pc_telemetry\MouseTelemetry\HeatMapGenerator\obj\Debug\HeatMapGenerator.csproj.CopyComplete
