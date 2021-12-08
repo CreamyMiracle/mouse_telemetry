@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using Common.Helpers;
 using Fclp;
@@ -68,16 +69,10 @@ namespace MouseTelemetry
 
             _mh = new MouseHook();
             _mh.SetHook();
-            
+
 
             _wh = new WindowHook();
             _wh.SetHook();
-            
-
-            string title = Win32API.GetActiveWindowTitle();
-            Rectangle rect = Win32API.GetActiveWindowRect();
-            ActiveWindowInfoEventArgs winArgs = new ActiveWindowInfoEventArgs() { Rect = rect, Title = _wh.GetActiveWindowTitle() };
-            _collector.ActiveWindowChanged(winArgs);
 
 
             _mh.MouseEvent += mh_MouseEvent;

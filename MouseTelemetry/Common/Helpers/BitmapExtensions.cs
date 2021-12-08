@@ -43,7 +43,7 @@ namespace Common.Helpers
 
         public static Bitmap OverlayWith(Bitmap baseImg, Bitmap overlay)
         {
-            Bitmap resizedImage = ResizeImage(baseImg, overlay.Width, overlay.Height);
+            Bitmap resizedImage = baseImg;//ResizeImage(baseImg, overlay.Width, overlay.Height);
             Bitmap opacityImg1 = SetImageOpacity(resizedImage, (float)0.50);
             Bitmap opacityImg2 = SetImageOpacity(overlay, (float)0.50);
 

@@ -92,7 +92,7 @@ namespace Heatmap
                 Bitmap heatMap = await GenerateHeatMap(_actions, _buttons, _windows);
                 Bitmap baseImg = new Bitmap(@"D:\Dev\pc_telemetry\MouseTelemetry\baseimg.PNG");
                 Bitmap overlayed = BitmapExtensions.OverlayWith(baseImg, heatMap);
-                overlayed.SaveBitmap(@"D:\Dev\pc_telemetry\MouseTelemetry\heatmap_with_overlay.PNG");
+                overlayed.SaveBitmap(@"D:\Dev\pc_telemetry\MouseTelemetry\heatmap_with_overlay_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png");
             }).Wait();
         }
 
