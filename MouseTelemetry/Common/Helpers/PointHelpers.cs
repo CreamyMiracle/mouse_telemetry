@@ -28,7 +28,6 @@ namespace Common.Helpers
             foreach (MouseEvent point in points)
             {
                 point.X += Convert.ToInt32(valueMinAbs);
-                //point.X = Convert.ToInt32(((scaleRange * (point.X - valueMin)) / valueRange) + scaleMin);
             }
 
             return Convert.ToInt32(scaleMax);
@@ -52,7 +51,6 @@ namespace Common.Helpers
             foreach (MouseEvent point in points)
             {
                 point.Y += Convert.ToInt32(valueMinAbs);
-                //point.Y = Convert.ToInt32(((scaleRange * (point.Y - valueMin)) / valueRange) + scaleMin);
             }
 
             return Convert.ToInt32(scaleMax);
@@ -60,6 +58,7 @@ namespace Common.Helpers
 
         public static Point NormalizeData(IEnumerable<MouseEvent> points)
         {
+            // Normalizes point to non-negative scale and returns the new scaled X and Y values. Minimum values are 0
             int maxInputX = points.Max(p => p.X);
             int maxInputY = points.Max(p => p.Y);
             int minInputX = points.Min(p => p.X);

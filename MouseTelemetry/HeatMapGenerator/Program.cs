@@ -18,7 +18,9 @@ namespace Heatmap
     class Program
     {
         private static SQLiteAsyncConnection db_async;
-        private static string _dbPath = @"D:\Dev\pc_telemetry\MouseTelemetry\mouse_events_08122021Utc.db";
+        private static string _dbPath = "";
+        private static string _baseImgPath = "";
+        private static bool _connectPoints = false;
         private static string _sqlQuery = string.Format("SELECT * FROM \"{0}\"", nameof(MouseEvent));
         private static IEnumerable<MouseAction> _actions;
         private static IEnumerable<MouseButton> _buttons;
@@ -27,10 +29,17 @@ namespace Heatmap
         private static List<MouseButton> _defaultButtons = Enum.GetValues(typeof(MouseButton)).Cast<MouseButton>().ToList();
         private static List<string> _defaultWindows = new List<string>() { };
         private static bool _parsingOk = true;
+        private static string mWorkDir = "";
 
         static void Main(string[] args)
         {
+            DirectoryInfo workDir = new DirectoryInfo(Environment.CurrentDirectory);
+            mWorkDir = workDir.FullName;
 #if DEBUG
+            mWorkDir = workDir.Parent.Parent.Parent.FullName;
+            _baseImgPath = @"F:\Dev\pc_telemetry\MouseTelemetry\baseimg.png";
+            _dbPath = @"F:\Dev\pc_telemetry\MouseTelemetry\mouse_events_08122021Utc.db";
+
             _windows = _defaultWindows;
             _actions = _defaultActions;
             _buttons = _defaultButtons;
@@ -41,16 +50,23 @@ namespace Heatmap
                 Run(args);
             }
 #endif
-
         }
         private static bool Parse(string[] args)
         {
             var p = new FluentCommandLineParser();
 
-            p.Setup<string>('p', "path")
+            p.Setup<string>('d', "data")
              .Callback(value => _dbPath = value)
              .Required()
              .WithDescription("Path from which a database file is read");
+
+            p.Setup<string>('i', "image")
+             .Callback(value => _baseImgPath = value)
+             .WithDescription("Path to the image used as base for heatmap");
+
+            p.Setup<bool>('c', "connect")
+             .Callback(value => _connectPoints = value)
+             .WithDescription("True points are connected, False if not");
 
             p.Setup<string>('q', "query")
              .Callback(value => _sqlQuery = value)
@@ -89,10 +105,37 @@ namespace Heatmap
 
             Task.Run(async () =>
             {
-                Bitmap heatMap = await GenerateHeatMap(_actions, _buttons, _windows);
-                Bitmap baseImg = new Bitmap(@"D:\Dev\pc_telemetry\MouseTelemetry\baseimg.PNG");
+                // Read all mouse events recorded
+                List<MouseEvent> allEvents = await ReadMouseEvents();
+
+                // XY-coordinates may be anything f.ex. (-1980,0) or (1080,-567)
+                // This normalizez the XY-coordinates so that they are non-negative
+                Point maxPoint = PointHelpers.NormalizeData(allEvents);
+
+                // Extracts primary mouse events (like LeftDown, LeftUp, MiddleDown) and secondary events like (Click, DoubleClick, Drag)
+                // Then prints those. This all is just for fun.
+                Dictionary<MouseButton, Dictionary<MouseAction, IEnumerable<IMouseEvent>>> btnActs = EventExtractor.ExtractButtonActions(allEvents);
+                EventExtractor.PrintButtonActions(btnActs, _windows);
+
+                // Filters just those events we are interested in
+                List<IMouseEvent> selectedData = EventExtractor.SelectCertain(btnActs, _actions, _buttons, _windows);
+
+                // Generates a heatmap bitmap
+                Bitmap heatMap = GenerateHeatMap(selectedData.Cast<MouseEvent>(), maxPoint);
+
+                // Connect points
+                if (_connectPoints) { heatMap.DrawLine(selectedData.Cast<MouseEvent>()); }
+
+                // Get image that is used as a base for heatmap
+                FileInfo baseImgFile = new FileInfo(_baseImgPath);
+                Bitmap baseImg = baseImgFile.Exists ? new Bitmap(_baseImgPath) : new Bitmap(maxPoint.X, maxPoint.Y);
+
+                // Overlay base image with heatmap
                 Bitmap overlayed = BitmapExtensions.OverlayWith(baseImg, heatMap);
-                overlayed.SaveBitmap(@"D:\Dev\pc_telemetry\MouseTelemetry\heatmap_with_overlay_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png");
+
+                // Save overlayed heatmap
+                overlayed.SaveBitmap(Path.Combine(mWorkDir, "heatmap_with_overlay_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png"));
+
             }).Wait();
         }
 
@@ -102,27 +145,15 @@ namespace Heatmap
             return events;
         }
 
-        private static async Task<Bitmap> GenerateHeatMap(IEnumerable<MouseAction> actions, IEnumerable<MouseButton> buttons, IEnumerable<string> windows)
+        private static Bitmap GenerateHeatMap(IEnumerable<MouseEvent> events, Point maxPoint)
         {
-            List<MouseEvent> originalTestData = await ReadMouseEvents();
-
-            Point maxPoint = PointHelpers.NormalizeData(originalTestData);
-
-            Dictionary<MouseButton, Dictionary<MouseAction, IEnumerable<IMouseEvent>>> btnActs = EventExtractor.ExtractButtonActions(originalTestData);
-            List<IMouseEvent> selectedData = EventExtractor.SelectCertain(btnActs, actions, buttons, _windows);
-            EventExtractor.PrintButtonActions(btnActs, _windows);
-
-
-            DirectoryInfo workDir = new DirectoryInfo(Environment.CurrentDirectory);
-            string basePath = workDir.Parent.Parent.Parent.FullName;
-            string dbPath = Path.Combine(basePath, "heatmap_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png");
+            string dbPath = Path.Combine(mWorkDir, "heatmap_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png");
 
             //Set up the factory and run the GetHeatMap function.
-            HeatmapFactory map = new HeatmapFactory(originalTestData, maxPoint);
+            HeatmapFactory map = new HeatmapFactory(maxPoint);
             //map.ColorFunction = HeatmapFactory.GrayScale;
             map.ColorFunction = HeatmapFactory.BasicColorMapping;
-            Bitmap heatMap = map.GetHeatMap(selectedData.Cast<MouseEvent>());
-            heatMap.DrawLine(selectedData.Cast<MouseEvent>());
+            Bitmap heatMap = map.GetHeatMap(events);
 
             return heatMap;
         }

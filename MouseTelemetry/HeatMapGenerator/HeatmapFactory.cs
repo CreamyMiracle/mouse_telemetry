@@ -13,7 +13,7 @@ namespace Heatmap
 {
     class HeatmapFactory
     {
-        public HeatmapFactory(IEnumerable<MouseEvent> points, Point maxPoint)
+        public HeatmapFactory(Point maxPoint)
         {
             InputMax = maxPoint;
             OutputResolution = maxPoint;
