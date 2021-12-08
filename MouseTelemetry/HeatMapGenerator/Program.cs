@@ -18,7 +18,7 @@ namespace Heatmap
     class Program
     {
         private static SQLiteAsyncConnection db_async;
-        private static string _dbPath = @"F:\Dev\pc_telemetry\MouseTelemetry\mouse_events_30112021Utc.db";
+        private static string _dbPath = @"D:\Dev\pc_telemetry\MouseTelemetry\mouse_events_08122021Utc.db";
         private static string _sqlQuery = string.Format("SELECT * FROM \"{0}\"", nameof(MouseEvent));
         private static IEnumerable<MouseAction> _actions;
         private static IEnumerable<MouseButton> _buttons;
@@ -89,7 +89,10 @@ namespace Heatmap
 
             Task.Run(async () =>
             {
-                await GenerateHeatMap(_actions, _buttons, _windows);
+                Bitmap heatMap = await GenerateHeatMap(_actions, _buttons, _windows);
+                Bitmap baseImg = new Bitmap(@"D:\Dev\pc_telemetry\MouseTelemetry\baseimg.PNG");
+                Bitmap overlayed = BitmapExtensions.OverlayWith(baseImg, heatMap);
+                overlayed.SaveBitmap(@"D:\Dev\pc_telemetry\MouseTelemetry\heatmap_with_overlay.PNG");
             }).Wait();
         }
 
@@ -99,12 +102,7 @@ namespace Heatmap
             return events;
         }
 
-        //private static async List<IMouseEvent> SelectPoints(IEnumerable<MouseAction> actions, IEnumerable<MouseButton> buttons)
-        //{
-        //    List<MouseEvent> originalTestData = await ReadMouseEvents();
-        //}
-
-        private static async Task GenerateHeatMap(IEnumerable<MouseAction> actions, IEnumerable<MouseButton> buttons, IEnumerable<string> windows)
+        private static async Task<Bitmap> GenerateHeatMap(IEnumerable<MouseAction> actions, IEnumerable<MouseButton> buttons, IEnumerable<string> windows)
         {
             List<MouseEvent> originalTestData = await ReadMouseEvents();
 
@@ -125,7 +123,8 @@ namespace Heatmap
             map.ColorFunction = HeatmapFactory.BasicColorMapping;
             Bitmap heatMap = map.GetHeatMap(selectedData.Cast<MouseEvent>());
             heatMap.DrawLine(selectedData.Cast<MouseEvent>());
-            heatMap.SaveBitmap(@"F:\Dev\pc_telemetry\MouseTelemetry\heatmappi.png");
+
+            return heatMap;
         }
     }
 }

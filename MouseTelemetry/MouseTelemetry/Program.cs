@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 using Common.Helpers;
 using Fclp;
 using MouseTelemetry.Hooks;
 using MouseTelemetry.Model;
+using static MouseTelemetry.Hooks.WindowHook;
 
 namespace MouseTelemetry
 {
@@ -66,13 +68,20 @@ namespace MouseTelemetry
 
             _mh = new MouseHook();
             _mh.SetHook();
-            _mh.MouseEvent += mh_MouseEvent;
+            
 
             _wh = new WindowHook();
             _wh.SetHook();
-            _wh.WindowChanged += wh_WindowEvent;
+            
 
-            _collector.ActiveWindowChanged(_wh.GetActiveWindowTitle());
+            string title = Win32API.GetActiveWindowTitle();
+            Rectangle rect = Win32API.GetActiveWindowRect();
+            ActiveWindowInfoEventArgs winArgs = new ActiveWindowInfoEventArgs() { Rect = rect, Title = _wh.GetActiveWindowTitle() };
+            _collector.ActiveWindowChanged(winArgs);
+
+
+            _mh.MouseEvent += mh_MouseEvent;
+            _wh.WindowChanged += wh_WindowEvent;
         }
 
         #region Mouse stuff
@@ -87,11 +96,11 @@ namespace MouseTelemetry
                 Console.WriteLine(ex);
             }
         }
-        private static void wh_WindowEvent(object sender, string name)
+        private static void wh_WindowEvent(object sender, ActiveWindowInfoEventArgs e)
         {
             try
             {
-                _collector.ActiveWindowChanged(name);
+                _collector.ActiveWindowChanged(e);
             }
             catch (Exception ex)
             {

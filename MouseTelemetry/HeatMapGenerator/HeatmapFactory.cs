@@ -223,19 +223,6 @@ namespace Heatmap
             }
 
             heatMask = new HeatMask(xRadius, yRadius, heatMaskArray);
-            /*
-            for (int i = -xRadius; i < xRadius; i++)
-            {
-                for (int j = -yRadius; j < yRadius; j++)
-                {
-                    Console.Write(heatMask.value(i, j));
-                }
-                Console.WriteLine();
-                Console.WriteLine();
-            }
-            */
-
-
             return heatMask;
         }
 

@@ -17,6 +17,7 @@ namespace Common.Helpers
             Right,
             Middle,
             Other,
+            WindowInit,
         }
 
         public enum MouseAction
@@ -31,6 +32,7 @@ namespace Common.Helpers
             Click,
             DoubleClick,
             Drag,
+            WindowInit,
         }
 
         public static string DefaultDatabasePath

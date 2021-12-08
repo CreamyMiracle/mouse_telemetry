@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -20,6 +21,14 @@ namespace MouseTelemetry
             public int wHitTestCode;
             public int dwExtraInfo;
         }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int Left;        // x position of upper-left corner  
+            public int Top;         // y position of upper-left corner  
+            public int Right;       // x position of lower-right corner  
+            public int Bottom;      // y position of lower-right corner  
+        }
         public delegate int MouseHookProc(int nCode, IntPtr wParam, IntPtr lParam);
         public delegate void WindowHookProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
 
@@ -35,7 +44,12 @@ namespace MouseTelemetry
         public static extern int CallNextHookEx(int idHook, int nCode, IntPtr wParam, IntPtr lParam);
 
 
+        [DllImport("user32.dll")]
+        private static extern bool SetProcessDPIAware();
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
         [DllImport("user32.dll")]
         public static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr hmodWinEventProc, WindowHookProc lpfnWinEventProc, uint idProcess, uint idThread, uint dwFlags);
@@ -58,6 +72,14 @@ namespace MouseTelemetry
                 return Buff.ToString();
             }
             return null;
+        }
+
+        public static Rectangle GetActiveWindowRect()
+        {
+            SetProcessDPIAware();
+            RECT t2;
+            GetWindowRect(GetForegroundWindow(), out t2);
+            return new Rectangle(t2.Left, t2.Top, Math.Abs(t2.Right) + Math.Abs(t2.Left), Math.Abs(t2.Bottom) + Math.Abs(t2.Top));
         }
     }
 }
