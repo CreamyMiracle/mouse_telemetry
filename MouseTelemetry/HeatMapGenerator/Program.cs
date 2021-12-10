@@ -5,6 +5,7 @@ using MouseTelemetry.Model;
 using SQLite;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -29,17 +30,13 @@ namespace Heatmap
         private static List<MouseButton> _defaultButtons = Enum.GetValues(typeof(MouseButton)).Cast<MouseButton>().ToList();
         private static List<string> _defaultWindows = new List<string>() { };
         private static bool _parsingOk = true;
-        private static string mWorkDir = "";
+        private static readonly DirectoryInfo mWorkDir = new DirectoryInfo(Environment.CurrentDirectory);
 
         static void Main(string[] args)
         {
-            DirectoryInfo workDir = new DirectoryInfo(Environment.CurrentDirectory);
-            mWorkDir = workDir.FullName;
 #if DEBUG
-            mWorkDir = workDir.Parent.Parent.Parent.FullName;
-            _baseImgPath = @"F:\Dev\pc_telemetry\MouseTelemetry\baseimg.png";
-            _dbPath = @"F:\Dev\pc_telemetry\MouseTelemetry\mouse_events_08122021Utc.db";
-
+            _baseImgPath = Path.Combine(mWorkDir.FullName, "baseimg.png"); // Dirty trick for debugging
+            _dbPath = Path.Combine(mWorkDir.FullName, Constants.DefaultDatabaseName + ".db"); // Dirty trick for debugging
             _windows = _defaultWindows;
             _actions = _defaultActions;
             _buttons = _defaultButtons;
@@ -62,6 +59,7 @@ namespace Heatmap
 
             p.Setup<string>('i', "image")
              .Callback(value => _baseImgPath = value)
+             .Required()
              .WithDescription("Path to the image used as base for heatmap");
 
             p.Setup<bool>('c', "connect")
@@ -134,7 +132,11 @@ namespace Heatmap
                 Bitmap overlayed = BitmapExtensions.OverlayWith(baseImg, heatMap);
 
                 // Save overlayed heatmap
-                overlayed.SaveBitmap(Path.Combine(mWorkDir, "heatmap_with_overlay_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png"));
+                string generatedImgPath = Path.Combine(mWorkDir.FullName, "heatmap_with_overlay_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png");
+                overlayed.SaveBitmap(generatedImgPath);
+
+                // Open created image
+                Process.Start(generatedImgPath);
 
             }).Wait();
         }
@@ -147,7 +149,7 @@ namespace Heatmap
 
         private static Bitmap GenerateHeatMap(IEnumerable<MouseEvent> events, Point maxPoint)
         {
-            string dbPath = Path.Combine(mWorkDir, "heatmap_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png");
+            string dbPath = Path.Combine(mWorkDir.FullName, "heatmap_" + TimeExtensions.GetCurrentTimeStampPrecise() + ".png");
 
             //Set up the factory and run the GetHeatMap function.
             HeatmapFactory map = new HeatmapFactory(maxPoint);
