@@ -18,7 +18,6 @@ namespace MouseTelemetry
         private static DataCollector _collector;
         private static string _dbDir = Constants.DefaultDatabasePath;
         private static string _dbName = Constants.DefaultDatabaseName;
-        private static string _windowOfInterest = "";
         private static bool _parsingOk = true;
 
         static void Main(string[] args)
@@ -48,11 +47,6 @@ namespace MouseTelemetry
              .SetDefault(Constants.DefaultDatabaseName)
              .WithDescription("Name for database file");
 
-            p.Setup<string>('w', "window")
-             .Callback(value => _windowOfInterest = value)
-             .SetDefault("")
-             .WithDescription("Window of interest. Will collect events only from this window");
-
             p.SetupHelp("?", "help")
              .Callback(text => { _parsingOk = false; Console.WriteLine(text); });
 
@@ -71,7 +65,7 @@ namespace MouseTelemetry
             Console.WriteLine("Saving mouse events to '{0}'", dbPath);
             Console.SetWindowSize(50, 10);
 
-            _collector = new DataCollector(dbPath, _windowOfInterest);
+            _collector = new DataCollector(dbPath);
 
             _mh = new MouseHook();
             _mh.SetHook();
