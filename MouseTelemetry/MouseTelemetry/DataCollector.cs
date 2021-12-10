@@ -15,10 +15,12 @@ namespace MouseTelemetry
 {
     public class DataCollector
     {
-        int totalEventsSaved = 0;
-        string currentWindow = "";
+        private int _totalEventsSaved = 0;
+        private string _currentWindow = "";
+        private string _windowOfInterest = "";
+
         Rectangle currentWindowRect = default;
-        public DataCollector(string dbPath)
+        public DataCollector(string dbPath, string _windowOfInterest)
         {
             Task.Run(async () => { db_async = await InitDatabase(dbPath); }).Wait();
         }
@@ -26,7 +28,7 @@ namespace MouseTelemetry
         #region Public Methods
         public void ActiveWindowChanged(ActiveWindowInfoEventArgs e)
         {
-            currentWindow = e.Title;
+            _currentWindow = e.Title;
             currentWindowRect = e.Rect;
 
             // To set max and min corner point to the data
@@ -53,14 +55,20 @@ namespace MouseTelemetry
 
             Rectangle maxRect = new Rectangle(left, top, Math.Abs(left) + Math.Abs(right), Math.Abs(top) + Math.Abs(bottom));
 
-            CollectMouseEvent(new MouseEvent(MouseButton.WindowInit, MouseAction.WindowInit, maxRect.Left, maxRect.Top, 0, currentWindow));
-            CollectMouseEvent(new MouseEvent(MouseButton.WindowInit, MouseAction.WindowInit, maxRect.Left, maxRect.Bottom, 0, currentWindow));
-            CollectMouseEvent(new MouseEvent(MouseButton.WindowInit, MouseAction.WindowInit, maxRect.Right, maxRect.Top, 0, currentWindow));
-            CollectMouseEvent(new MouseEvent(MouseButton.WindowInit, MouseAction.WindowInit, maxRect.Right, maxRect.Bottom, 0, currentWindow));
+            CollectMouseEvent(new MouseEvent(MouseButton.WindowInit, MouseAction.WindowInit, maxRect.Left, maxRect.Top, 0, _currentWindow));
+            CollectMouseEvent(new MouseEvent(MouseButton.WindowInit, MouseAction.WindowInit, maxRect.Left, maxRect.Bottom, 0, _currentWindow));
+            CollectMouseEvent(new MouseEvent(MouseButton.WindowInit, MouseAction.WindowInit, maxRect.Right, maxRect.Top, 0, _currentWindow));
+            CollectMouseEvent(new MouseEvent(MouseButton.WindowInit, MouseAction.WindowInit, maxRect.Right, maxRect.Bottom, 0, _currentWindow));
         }
         public void CollectMouseEvent(MouseEvent me)
         {
-            me.Window = currentWindow;
+            // Block events from all other windows
+            if (!_currentWindow.ToLower().Contains(_windowOfInterest.ToLower()))
+            {
+                return;
+            }
+
+            me.Window = _currentWindow;
             if (BatchSaved())
             {
                 if (midSaveBatch.Count > 0)
@@ -93,9 +101,9 @@ namespace MouseTelemetry
         private async Task SaveBatch()
         {
             await db_async.InsertAllAsync(saveBatch);
-            totalEventsSaved += saveBatch.Count;
+            _totalEventsSaved += saveBatch.Count;
             saveBatch.Clear();
-            Console.WriteLine(totalEventsSaved);
+            Console.WriteLine(_totalEventsSaved);
             return;
         }
         private bool BatchSaved()

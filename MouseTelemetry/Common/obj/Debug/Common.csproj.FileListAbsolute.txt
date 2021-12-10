@@ -9,4 +9,3 @@ D:\Dev\pc_telemetry\MouseTelemetry\Common\obj\Debug\Common.csproj.CoreCompileInp
 D:\Dev\pc_telemetry\MouseTelemetry\Common\obj\Debug\Common.dll
 D:\Dev\pc_telemetry\MouseTelemetry\Common\obj\Debug\Common.pdb
 F:\Dev\pc_telemetry\MouseTelemetry\Common\obj\Debug\Common.csproj.AssemblyReference.cache
-D:\Dev\pc_telemetry\MouseTelemetry\Common\obj\Debug\Common.csprojAssemblyReference.cache
